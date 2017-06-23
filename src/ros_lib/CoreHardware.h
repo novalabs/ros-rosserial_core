@@ -37,12 +37,10 @@
 
 #include <ch.h>
 #include <hal.h>
+#include <usbcfg.h>
+#include <Module.hpp>
 
-#if USE_USB_SERIAL
 #define SERIAL_CLASS SerialUSBDriver
-#else
-#define SERIAL_CLASS SerialDriver
-#endif
 
 class CoreHardware {
   public:
@@ -52,13 +50,7 @@ class CoreHardware {
     }
     CoreHardware()
     {
-#if USE_USB_SERIAL
       iostream = &SDU1;
-#else
-#if STM32_SERIAL_USE_USART3
-      iostream = &SD3;
-#endif
-#endif
       baud_ = 57600;
     }
     CoreHardware(CoreHardware& h){
@@ -73,19 +65,18 @@ class CoreHardware {
     int getBaud(){return baud_;}
 
     void init(){
-//      iostream->begin(baud_);
     }
 
     int read(){
 		uint8_t b;
-		if (sdAsynchronousRead(iostream, &b, 1)) {
+		if (Module::stream.get(b, core::os::Time::IMMEDIATE)) {
 			return (int)b;
 		} else {
 			return -1;
 		}
     }
     void write(uint8_t* data, int length){
-      sdWrite(iostream, data, length);
+    	Module::stream.write(data, length, core::os::Time::INFINITE);
     }
 
     unsigned long time(){return ((chVTGetSystemTimeX() / CH_CFG_ST_FREQUENCY) * 1000L);}

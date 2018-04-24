@@ -32,59 +32,40 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef ROS_CORE_HARDWARE_H_
-#define ROS_CORE_HARDWARE_H_
+#pragma once
 
-#include <ch.h>
-#include <hal.h>
-#include <usbcfg.h>
+#include <core/os/Time.hpp>
 #include <Module.hpp>
 
-#define SERIAL_CLASS SerialUSBDriver
-
-class CoreHardware {
+class CoreIOChannelHardware {
   public:
-    CoreHardware(SERIAL_CLASS* io , long baud= 57600){
-      iostream = io;
-      baud_ = baud;
-    }
-    CoreHardware()
-    {
-      iostream = &SDU1;
-      baud_ = 57600;
-    }
-    CoreHardware(CoreHardware& h){
-      this->iostream = iostream;
-      this->baud_ = h.baud_;
-    }
-  
-    void setBaud(long baud){
-      this->baud_= baud;
-    }
-  
-    int getBaud(){return baud_;}
+	CoreIOChannelHardware() : _io_channel (nullptr) {}
 
-    void init(){
+	void setIOChannel(core::os::IOChannel& io_channel) {
+		_io_channel = &io_channel;
+	}
+
+  	void init() {
+  		CORE_ASSERT(_io_channel != nullptr);
     }
 
     int read(){
 		uint8_t b;
-		if (Module::stream.get(b, core::os::Time::IMMEDIATE)) {
+		if (_io_channel->get(b, core::os::Time::IMMEDIATE)) {
 			return (int)b;
 		} else {
 			return -1;
 		}
     }
     void write(uint8_t* data, int length){
-    	Module::stream.write(data, length, core::os::Time::INFINITE);
+    	_io_channel->write(data, length, core::os::Time::INFINITE);
     }
 
-    unsigned long time(){return ((chVTGetSystemTimeX() / CH_CFG_ST_FREQUENCY) * 1000L);}
+    unsigned long time() {
+    	auto now = core::os::Time::now();
 
+    	return now.ms();
+    }
   protected:
-    SERIAL_CLASS* iostream;
-    long baud_;
+    core::os::IOChannel* _io_channel;
 };
-
-#endif
-

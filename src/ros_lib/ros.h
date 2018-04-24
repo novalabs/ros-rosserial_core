@@ -36,11 +36,11 @@
 #define _ROS_H_
 
 #include "ros/node_handle.h"
-#include "CoreHardware.h"
+#include "CoreIOChannelHardware.h"
 
 namespace ros
 {
-  typedef NodeHandle_<CoreHardware> NodeHandle;
+  typedef NodeHandle_<CoreIOChannelHardware> NodeHandle;
 }
 
 #endif
